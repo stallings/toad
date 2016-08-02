@@ -2,6 +2,8 @@ var path = require('path');
 var autoprefixer = require('autoprefixer');
 var webpack = require('webpack');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
+var atImport = require('postcss-import');
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 // TODO: hide this behind a flag and eliminate dead code on eject.
 // This shouldn't be exposed to the user.
@@ -35,7 +37,10 @@ module.exports = {
     publicPath: '/'
   },
   resolve: {
-    extensions: ['', '.js'],
+    extensions: ['', '.js', '.jsx', '.css'],
+    modulesDirectories: [
+      'node_modules'
+    ]
   },
   resolveLoader: {
     root: nodeModulesPath,
@@ -58,8 +63,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        include: srcPath,
-        loader: 'style!css!postcss'
+        loader: ExtractTextPlugin.extract('style', 'css!postcss')
       },
       {
         test: /\.json$/,
@@ -79,9 +83,14 @@ module.exports = {
     configFile: path.join(__dirname, 'eslint.js'),
     useEslintrc: false
   },
-  postcss: function() {
-    return [autoprefixer];
-  },
+
+  postcss: [
+      atImport({
+        path: ['node_modules', './src']
+      }),
+      autoprefixer
+  ],
+
   plugins: [
     new HtmlWebpackPlugin({
       inject: true,
@@ -90,6 +99,8 @@ module.exports = {
     }),
     new webpack.DefinePlugin({ 'process.env.NODE_ENV': '"development"' }),
     // Note: only CSS is currently hot reloaded
-    new webpack.HotModuleReplacementPlugin()
+    new webpack.HotModuleReplacementPlugin(),
+
+    new ExtractTextPlugin("[name].css")
   ]
 };
